@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "backupb2"
+version = "0.1.0"
+description = ""
+authors = ["azyobuzin <azyobuzin@users.sourceforge.jp>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+b2sdk = "^1.0"
+
+[tool.poetry.dev-dependencies]
+autopep8 = "*"
+pylint = "*"
+rope = "*"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
