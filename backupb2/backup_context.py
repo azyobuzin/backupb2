@@ -17,3 +17,6 @@ class BackupContext:
             self.logger.info('Uploaded to %s', dst)
         else:
             self.logger.info('Upload skipped')
+
+    def download_file_if_exists(self, src: str, dst: path_like_obj) -> bool:
+        return self.uploader.download_if_exists(src, dst)

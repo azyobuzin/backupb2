@@ -30,21 +30,18 @@ class B2Uploader(Uploader):
 
         parsed_destination = b2.parse_sync_folder(dst, api)
         if not isinstance(parsed_destination, b2.B2Folder):
-            raise ValueError('dst is not a string starting with b2://')
+            raise ValueError('dst does not start with b2://')
 
+        bucket: b2.Bucket = parsed_destination.bucket
         us = b2.UploadSourceLocalFile(os.fspath(src))
         sha1 = us.get_content_sha1()
 
         # Try to get file info of the existing file
         try:
-            with self.b2_api.session.download_file_from_url(
-                parsed_destination.bucket.get_download_url(
-                    parsed_destination.folder_name),
-                (0, 0)  # No downloading the content
-            ) as res:
-                if res.headers.get('X-Bz-Info-large_file_sha1') == sha1:
-                    # No need to upload
-                    return False
+            file_info = bucket.get_file_info_by_name(parsed_destination.folder_name)
+            if file_info.content_sha1 == sha1:
+                # No need to upload
+                return False
         except b2exc.FileNotPresent:
             pass
 
@@ -52,6 +49,23 @@ class B2Uploader(Uploader):
             us,
             parsed_destination.folder_name,
             file_info={'large_file_sha1': sha1})
+        return True
+
+    def download_if_exists(self, src: str, dst: path_like_obj) -> bool:
+        api = self._get_api()
+
+        parsed_src = b2.parse_sync_folder(src, api)
+        if not isinstance(parsed_src, b2.B2Folder):
+            raise ValueError('src does not start with b2://')
+
+        bucket: b2.Bucket = parsed_src.bucket
+        download_dest = b2.DownloadDestLocalFile(dst)
+
+        try:
+            bucket.download_file_by_name(parsed_src.folder_name, download_dest)
+        except b2exc.FileNotPresent:
+            return False
+
         return True
 
     @classmethod

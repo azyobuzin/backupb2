@@ -6,7 +6,9 @@ from tempfile import NamedTemporaryFile
 import typing as t
 from .backup_context import BackupContext
 
-__all__ = ['upload_archive', 'add_sqlite_file']
+__all__ = ['upload_archive', 'add_sqlite_file', 'download_and_extract']
+
+path_like_obj = t.Union[os.PathLike, str, bytes]
 
 
 def upload_archive(ctx: BackupContext,
@@ -14,10 +16,11 @@ def upload_archive(ctx: BackupContext,
                    create_archive: t.Callable[[
                        BackupContext, TarFile], None]
                    ) -> None:
-    with NamedTemporaryFile(mode='rb', suffix='.tar.xz') as archive_file:
+    with NamedTemporaryFile(mode='wb', suffix='.tar.xz') as archive_file:
         ctx.logger.debug('Creating archive to %s', archive_file.name)
-        with TarFile.open(archive_file.name, 'w:xz') as tar:
+        with TarFile.open(fileobj=archive_file, mode='w:xz') as tar:
             create_archive(ctx, tar)
+        archive_file.flush()
 
         ctx.upload_file(archive_file.name, dst)
 
@@ -48,3 +51,20 @@ def add_sqlite_file(ctx: BackupContext,
 
         with open(src, 'rb') as f:
             tar.addfile(ti, f)
+
+
+def download_and_extract(ctx: BackupContext, src: str, dst: path_like_obj) -> bool:
+    ctx.logger.info('Restoring from %s to %s', src, dst)
+
+    with NamedTemporaryFile(mode='rb') as download_dst:
+        if not ctx.download_file_if_exists(src, download_dst.name):
+            ctx.logger.info('No backup is found')
+            return False
+
+        ctx.logger.debug('Extracting to %s', dst)
+        os.makedirs(dst, exist_ok=True)
+
+        with TarFile.open(fileobj=download_dst, mode='r:*') as tar:
+            tar.extractall(dst, numeric_owner=True)
+
+    return True

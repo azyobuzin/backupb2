@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "backupb2"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["azyobuzin <azyobuzin@users.sourceforge.jp>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-b2sdk = "^1.0"
+b2sdk = "^1.5"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "*"
