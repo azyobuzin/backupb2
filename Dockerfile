@@ -17,6 +17,6 @@ RUN source $HOME/.poetry/env && poetry build -n -f wheel
 
 # output: Install the built package
 FROM base
+ENV PYTHONDONTWRITEBYTECODE=1
 COPY --from=builder /src/dist /dist
 RUN pip3 install --no-cache-dir /dist/*.whl b2 && rm -rf /dist
-ENV PYTHONDONTWRITEBYTECODE=1
